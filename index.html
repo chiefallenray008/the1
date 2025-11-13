@@ -797,3 +797,469 @@
           day: "numeric"
         });
         analyticsDateLabel.textContent = today.toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+          year: "numeric"
+        });
+      }
+
+      function initQuote() {
+        const quotes = [
+          "Numbers tell the story. You decide how the story ends.",
+          "Every transfer is a chance to change a family’s future.",
+          "“Some people want it to happen, some wish it would happen, others make it happen.” – MJ",
+          "Protect one family at a time; build one empire in the process.",
+          "Show up. Serve hard. The AP will follow."
+        ];
+        const index = new Date().getDate() % quotes.length;
+        quoteEl.textContent = quotes[index];
+      }
+
+      function renderTeam() {
+        // dropdown
+        memberSelect.innerHTML = '<option value="">— Select teammate —</option>';
+        state.teamMembers.forEach((m) => {
+          const opt = document.createElement("option");
+          opt.value = m;
+          opt.textContent = m;
+          memberSelect.appendChild(opt);
+        });
+
+        // chips
+        teamListEl.innerHTML = "";
+        if (!state.teamMembers.length) {
+          const p = document.createElement("div");
+          p.className = "mini";
+          p.textContent = "No teammates yet. Add a name above to get started.";
+          teamListEl.appendChild(p);
+          return;
+        }
+
+        state.teamMembers.forEach((m) => {
+          const div = document.createElement("span");
+          div.className = "team-pill";
+          div.innerHTML =
+            '<span class="dot"></span><span>' + m + "</span>";
+          teamListEl.appendChild(div);
+        });
+      }
+
+      function getDateEntries(dateStr) {
+        return state.entriesByDate[dateStr] || {};
+      }
+
+      function setDateEntry(dateStr, member, entry) {
+        if (!state.entriesByDate[dateStr]) {
+          state.entriesByDate[dateStr] = {};
+        }
+        state.entriesByDate[dateStr][member] = entry;
+      }
+
+      function buildEmptyMetrics() {
+        return {
+          presentations: 0,
+          medicareApps: 0,
+          lifeApps: 0,
+          lifeAp: 0,
+          hiApps: 0,
+          chasApps: 0,
+          transfers: 0
+        };
+      }
+
+      function aggregateDay(dateStr) {
+        const entries = getDateEntries(dateStr);
+        const totals = buildEmptyMetrics();
+        const perMember = {};
+
+        Object.keys(entries).forEach((member) => {
+          const e = entries[member];
+          const safe = {
+            presentations: Number(e.presentations || 0),
+            medicareApps: Number(e.medicareApps || 0),
+            lifeApps: Number(e.lifeApps || 0),
+            lifeAp: Number(e.lifeAp || 0),
+            hiApps: Number(e.hiApps || 0),
+            chasApps: Number(e.chasApps || 0),
+            transfers: Number(e.transfers || 0)
+          };
+
+          perMember[member] = safe;
+
+          Object.keys(totals).forEach((k) => {
+            totals[k] += safe[k];
+          });
+        });
+
+        return { totals, perMember };
+      }
+
+      function aggregateAllTime() {
+        const totalsPerMember = {};
+        const totalsOverall = buildEmptyMetrics();
+
+        Object.keys(state.entriesByDate).forEach((dateStr) => {
+          const dateEntries = state.entriesByDate[dateStr];
+          Object.keys(dateEntries).forEach((member) => {
+            const e = dateEntries[member];
+            if (!totalsPerMember[member]) {
+              totalsPerMember[member] = buildEmptyMetrics();
+            }
+            const mAgg = totalsPerMember[member];
+            const safe = {
+              presentations: Number(e.presentations || 0),
+              medicareApps: Number(e.medicareApps || 0),
+              lifeApps: Number(e.lifeApps || 0),
+              lifeAp: Number(e.lifeAp || 0),
+              hiApps: Number(e.hiApps || 0),
+              chasApps: Number(e.chasApps || 0),
+              transfers: Number(e.transfers || 0)
+            };
+
+            Object.keys(mAgg).forEach((k) => {
+              mAgg[k] += safe[k];
+              totalsOverall[k] += safe[k];
+            });
+          });
+        });
+
+        return { totalsPerMember, totalsOverall };
+      }
+
+      function renderBarChart(dateStr) {
+        const { totals } = aggregateDay(dateStr);
+        const metrics = [
+          { key: "presentations", label: "Pres." },
+          { key: "medicareApps", label: "Medicare" },
+          { key: "lifeApps", label: "Life Apps" },
+          { key: "lifeAp", label: "Life AP" },
+          { key: "hiApps", label: "H.I." },
+          { key: "chasApps", label: "CHAS" },
+          { key: "transfers", label: "Transfers" }
+        ];
+
+        let maxValue = 0;
+        metrics.forEach((m) => {
+          const v = totals[m.key];
+          if (v > maxValue) maxValue = v;
+        });
+        if (maxValue === 0) maxValue = 1;
+
+        barChartEl.innerHTML = "";
+        metrics.forEach((m) => {
+          const wrapper = document.createElement("div");
+          wrapper.className = "bar-wrapper";
+
+          const bar = document.createElement("div");
+          bar.className = "bar";
+          const value = Number(totals[m.key] || 0);
+          const heightPercent = (value / maxValue) * 100;
+          bar.style.height = heightPercent + "%";
+          bar.style.opacity = value > 0 ? 1 : 0.15;
+
+          const vLabel = document.createElement("div");
+          vLabel.className = "bar-value";
+          vLabel.textContent = value;
+
+          const lLabel = document.createElement("div");
+          lLabel.className = "bar-label";
+          lLabel.textContent = m.label;
+
+          wrapper.appendChild(bar);
+          wrapper.appendChild(vLabel);
+          wrapper.appendChild(lLabel);
+          barChartEl.appendChild(wrapper);
+        });
+      }
+
+      function renderTodayBreakdown(dateStr) {
+        const { totals } = aggregateDay(dateStr);
+        todayBreakdownEl.innerHTML = "";
+
+        const rows = [
+          ["Presentations", totals.presentations],
+          ["Medicare Apps Submitted", totals.medicareApps],
+          ["Life Apps Submitted", totals.lifeApps],
+          ["Life AP ($)", totals.lifeAp],
+          ["H.I. Apps Submitted", totals.hiApps],
+          ["CHAS Plan Submissions", totals.chasApps],
+          ["Transfers", totals.transfers]
+        ];
+
+        rows.forEach(([label, value]) => {
+          const row = document.createElement("div");
+          row.className = "breakdown-grid-row";
+          const spanLabel = document.createElement("span");
+          spanLabel.className = "label";
+          spanLabel.textContent = label;
+          const spanValue = document.createElement("span");
+          spanValue.className = "value";
+          spanValue.textContent =
+            label === "Life AP ($)"
+              ? "$" + Number(value || 0).toLocaleString()
+              : Number(value || 0).toLocaleString();
+
+          row.appendChild(spanLabel);
+          row.appendChild(spanValue);
+          todayBreakdownEl.appendChild(row);
+        });
+      }
+
+      function renderLeaderboardToday(dateStr) {
+        const { perMember } = aggregateDay(dateStr);
+        leaderboardListEl.innerHTML = "";
+        const members = Object.keys(perMember);
+
+        if (!members.length) {
+          leaderboardListEl.innerHTML =
+            '<div class="mini">No entries yet for today. Add numbers on the left to see who’s leading.</div>';
+          return;
+        }
+
+        const scored = members.map((m) => {
+          const e = perMember[m];
+          const score =
+            e.medicareApps * 5 +
+            e.lifeApps * 4 +
+            e.hiApps * 3 +
+            e.chasApps * 3 +
+            e.presentations * 1 +
+            e.transfers * 0.5;
+          return { name: m, score, e };
+        });
+
+        scored.sort((a, b) => b.score - a.score);
+
+        scored.forEach((item, idx) => {
+          const row = document.createElement("div");
+          row.className = "lb-row";
+          const nameSpan = document.createElement("span");
+          nameSpan.className = "name";
+          nameSpan.textContent = (idx + 1) + ". " + item.name;
+
+          const detailSpan = document.createElement("span");
+          detailSpan.className = "detail";
+          detailSpan.textContent =
+            item.e.medicareApps +
+            " Med · " +
+            item.e.lifeApps +
+            " Life · " +
+            item.e.hiApps +
+            " H.I. · " +
+            item.e.chasApps +
+            " CHAS · " +
+            item.e.presentations +
+            " Pres · " +
+            item.e.transfers +
+            " Trf";
+
+          const valueSpan = document.createElement("span");
+          valueSpan.className = "value";
+          valueSpan.textContent = "Score " + item.score.toFixed(1);
+
+          row.appendChild(nameSpan);
+          row.appendChild(detailSpan);
+          row.appendChild(valueSpan);
+          leaderboardListEl.appendChild(row);
+        });
+      }
+
+      function renderLeaderboardAllTime() {
+        const { totalsPerMember } = aggregateAllTime();
+        leaderboardListEl.innerHTML = "";
+        const members = Object.keys(totalsPerMember);
+
+        if (!members.length) {
+          leaderboardListEl.innerHTML =
+            '<div class="mini">No production yet. Start logging numbers to unlock all-time stats.</div>';
+          return;
+        }
+
+        const scored = members.map((m) => {
+          const e = totalsPerMember[m];
+          const score =
+            e.medicareApps * 5 +
+            e.lifeApps * 4 +
+            e.hiApps * 3 +
+            e.chasApps * 3 +
+            e.presentations * 1 +
+            e.transfers * 0.25;
+          return { name: m, score, e };
+        });
+
+        scored.sort((a, b) => b.score - a.score);
+
+        scored.forEach((item, idx) => {
+          const row = document.createElement("div");
+          row.className = "lb-row";
+          const nameSpan = document.createElement("span");
+          nameSpan.className = "name";
+          nameSpan.textContent = (idx + 1) + ". " + item.name;
+
+          const detailSpan = document.createElement("span");
+          detailSpan.className = "detail";
+          detailSpan.textContent =
+            item.e.medicareApps +
+            " Med · " +
+            item.e.lifeApps +
+            " Life · " +
+            item.e.hiApps +
+            " H.I. · " +
+            item.e.chasApps +
+            " CHAS · " +
+            item.e.presentations +
+            " Pres · " +
+            item.e.transfers +
+            " Trf";
+
+          const valueSpan = document.createElement("span");
+          valueSpan.className = "value";
+          valueSpan.textContent = "Score " + item.score.toFixed(1);
+
+          row.appendChild(nameSpan);
+          row.appendChild(detailSpan);
+          row.appendChild(valueSpan);
+          leaderboardListEl.appendChild(row);
+        });
+      }
+
+      function refreshAllForDate(dateStr) {
+        renderBarChart(dateStr);
+        renderTodayBreakdown(dateStr);
+
+        if (tabToday.classList.contains("active")) {
+          renderLeaderboardToday(dateStr);
+        } else {
+          renderLeaderboardAllTime();
+        }
+      }
+
+      function showSaved() {
+        savedIndicator.classList.add("visible");
+        setTimeout(() => {
+          savedIndicator.classList.remove("visible");
+        }, 1500);
+      }
+
+      saveBtn.addEventListener("click", function () {
+        const dateStr = dateInput.value;
+        const member = memberSelect.value;
+        if (!dateStr || !member) {
+          alert("Pick a date and a team member before saving.");
+          return;
+        }
+
+        const entry = {
+          presentations: Number(presentationsInput.value || 0),
+          medicareApps: Number(medicareAppsInput.value || 0),
+          lifeApps: Number(lifeAppsInput.value || 0),
+          lifeAp: Number(lifeApInput.value || 0),
+          hiApps: Number(hiAppsInput.value || 0),
+          chasApps: Number(chasAppsInput.value || 0),
+          transfers: Number(transfersInput.value || 0)
+        };
+
+        setDateEntry(dateStr, member, entry);
+        safeSave(state);
+        showSaved();
+        refreshAllForDate(dateStr);
+      });
+
+      addMemberBtn.addEventListener("click", function () {
+        const name = (newMemberInput.value || "").trim();
+        if (!name) return;
+        if (!state.teamMembers.includes(name)) {
+          state.teamMembers.push(name);
+          safeSave(state);
+          renderTeam();
+        }
+        newMemberInput.value = "";
+      });
+
+      newMemberInput.addEventListener("keyup", function (e) {
+        if (e.key === "Enter") {
+          addMemberBtn.click();
+        }
+      });
+
+      // Date change should update analytics + breakdown + today leaderboard
+      dateInput.addEventListener("change", function () {
+        const dateStr = dateInput.value;
+        if (!dateStr) return;
+        analyticsDateLabel.textContent = new Date(dateStr).toLocaleDateString(
+          undefined,
+          { month: "short", day: "numeric", year: "numeric" }
+        );
+        refreshAllForDate(dateStr);
+      });
+
+      tabToday.addEventListener("click", function () {
+        tabToday.classList.add("active");
+        tabAllTime.classList.remove("active");
+        const dateStr = dateInput.value;
+        renderLeaderboardToday(dateStr);
+      });
+
+      tabAllTime.addEventListener("click", function () {
+        tabAllTime.classList.add("active");
+        tabToday.classList.remove("active");
+        renderLeaderboardAllTime();
+      });
+
+      exportBtn.addEventListener("click", function () {
+        const dataStr = JSON.stringify(state, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "team-tracker-data.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+
+      importFile.addEventListener("change", function () {
+        const file = importFile.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          try {
+            const imported = JSON.parse(e.target.result);
+            if (
+              typeof imported === "object" &&
+              imported &&
+              imported.entriesByDate &&
+              imported.teamMembers
+            ) {
+              state = imported;
+              safeSave(state);
+              renderTeam();
+              const dateStr = dateInput.value;
+              refreshAllForDate(dateStr);
+              alert("Import successful!");
+            } else {
+              alert("File format not recognized.");
+            }
+          } catch (err) {
+            console.error(err);
+            alert("Could not read JSON file.");
+          }
+        };
+        reader.readAsText(file);
+        importFile.value = "";
+      });
+
+      function init() {
+        initToday();
+        initQuote();
+        renderTeam();
+        const dateStr = dateInput.value;
+        refreshAllForDate(dateStr);
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
