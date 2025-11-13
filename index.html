@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Waves of Protection Insurance — Team Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #050816;
+      --card-bg: #0b1020;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.15);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --danger: #f97373;
+      --success: #4ade80;
+      --border: #1f2937;
+      --shadow: 0 18px 45px rgba(15, 23, 42, 0.9);
+      --radius-xl: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter",
+        "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, #0f172a 0, #020617 50%, #000 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 1240px;
+      display: grid;
+      grid-template-columns: 2.4fr 1.4fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 960px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: linear-gradient(145deg, #020617 0, #020617 45%, #020617 100%);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border);
+      padding: 18px 18px 16px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0.12;
+      background: radial-gradient(circle at top left, #38bdf8 0, transparent 45%),
+        radial-gradient(circle at bottom right, #6366f1 0, transparent 55%);
+      pointer-events: none;
+    }
+
+    .card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin: 0;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    h1 span.badge {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      color: var(--muted);
+    }
+
+    h2 {
+      font-size: 1.05rem;
+      margin: 0 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.86rem;
+      margin-top: 4px;
+    }
+
+    .pill-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .pill-row button,
+    .pill-row label.buttonlike {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.7);
+      color: var(--text);
+      padding: 6px 12px;
+      font-size: 0.78rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .pill-row button:hover,
+    .pill-row label.buttonlike:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.4);
+    }
+
+    .warning {
+      margin-top: 10px;
+      font-size: 0.78rem;
+      color: var(--danger);
+      display: none;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .warning.visible {
+      display: inline-flex;
+    }
+
+    .layout-main {
+      display: grid;
+      gap: 14px;
+    }
+
+    .layout-main-inner {
+      display: grid;
+      grid-template-columns: 1.4fr 1.3fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 960px) {
+      .layout-main-inner {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 12px;
+      margin-top: 8px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.8rem;
+    }
+
+    .field label {
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .field label span.tag {
+      font-size: 0.7rem;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--muted);
+    }
+
+    input,
+    select {
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      background: rgba(15, 23, 42, 0.9);
+      padding: 6px 8px;
+      color: var(--text);
+      font-size: 0.82rem;
+      outline: none;
+      width: 100%;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.4);
+    }
+
+    input[type="number"] {
+      text-align: right;
+    }
+
+    .quick-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .quick-header-row small {
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .quick-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .btn-primary {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 16px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, #38bdf8, #6366f1);
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 12px 30px rgba(37, 99, 235, 0.6);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .saved-indicator {
+      font-size: 0.78rem;
+      color: var(--success);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .saved-indicator.visible {
+      opacity: 1;
+    }
+
+    .mini {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .team-list {
+      margin-top: 8px;
+      max-height: 180px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .team-pill {
+      font-size: 0.78rem;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0 6px 6px 0;
+    }
+
+    .team-pill span.dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+    }
+
+    .team-add-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .team-add-row input {
+      flex: 1;
+    }
+
+    .team-add-row button {
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text);
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .team-add-row button:hover {
+      border-color: var(--accent);
+    }
+
+    .leaderboard-section {
+      margin-top: 6px;
+    }
+
+    .leaderboard-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .leaderboard-tabs button {
+      flex: 1;
+      font-size: 0.78rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--muted);
+      padding: 5px 8px;
+      cursor: pointer;
+    }
+
+    .leaderboard-tabs button.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(56, 189, 248, 0.05);
+    }
+
+    .leaderboard-list {
+      font-size: 0.78rem;
+      border-radius: 12px;
+      padding: 6px 8px;
+      background: radial-gradient(circle at top, rgba(15, 118, 110, 0.2), transparent 55%);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      max-height: 190px;
+      overflow: auto;
+    }
+
+    .lb-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 4px;
+      gap: 6px;
+    }
+
+    .lb-row span.name {
+      font-weight: 500;
+    }
+
+    .lb-row span.value {
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .lb-row span.detail {
+      color: var(--muted);
+    }
+
+    .breakdown-grid {
+      margin-top: 6px;
+      font-size: 0.78rem;
+      border-radius: 12px;
+      padding: 6px 8px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      background: radial-gradient(circle at top, rgba(56, 189, 248, 0.14), transparent 55%);
+    }
+
+    .breakdown-grid-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      gap: 6px;
+    }
+
+    .breakdown-grid-row span.label {
+      color: var(--muted);
+    }
+
+    .breakdown-grid-row span.value {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .analytics-container {
+      margin-top: 4px;
+      border-radius: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: radial-gradient(circle at top, rgba(56, 189, 248, 0.18), transparent 50%);
+      padding: 8px 10px 10px;
+      font-size: 0.78rem;
+    }
+
+    .analytics-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 4px;
+      gap: 6px;
+    }
+
+    .analytics-header span.sub {
+      color: var(--muted);
+      font-size: 0.74rem;
+    }
+
+    .bar-chart {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      align-items: flex-end;
+      height: 140px;
+      margin-top: 4px;
+    }
+
+    .bar-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .bar {
+      width: 100%;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #38bdf8, #1d4ed8);
+      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.6);
+      transform-origin: center bottom;
+      transition: height 0.25s ease-out, opacity 0.25s ease-out;
+      opacity: 0.15;
+    }
+
+    .bar-label {
+      writing-mode: vertical-rl;
+      font-size: 0.62rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .bar-value {
+      font-variant-numeric: tabular-nums;
+      font-size: 0.7rem;
+    }
+
+    .footer {
+      margin-top: 6px;
+      font-size: 0.74rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .footer span.brand {
+      color: rgba(148, 163, 184, 0.9);
+    }
+
+    .tips-list {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 6px;
+      padding-left: 14px;
+    }
+
+    .tips-list li {
+      margin-bottom: 3px;
+    }
+
+    .quote-card {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      border-radius: 12px;
+      padding: 8px 10px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: radial-gradient(circle at top, rgba(56, 189, 248, 0.12), transparent 55%);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .quote-card span.text {
+      max-width: 80%;
+    }
+
+    .quote-card span.date-pill {
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- LEFT: Main tracker -->
+    <div class="card">
+      <h1>
+        Waves of Protection Insurance
+        <span class="badge">Team Tracker • Medicare • Life • H.I. • CHAS • Transfers</span>
+      </h1>
+      <div class="subtitle">
+        Daily production tracking for your HEAP crew — optimized for quick entries & clear analytics.
+      </div>
+
+      <div class="pill-row">
+        <button id="exportBtn">📤 Export JSON</button>
+        <label class="buttonlike" for="importFile">📥 Import
+          <input id="importFile" type="file" accept="application/json" style="display:none" />
+        </label>
+        <span id="storageWarning" class="warning">
+          ⚠️ Saving is disabled (localStorage not available). Use a normal tab or enable storage.
+        </span>
+      </div>
+
+      <div class="layout-main">
+        <!-- Daily Inspiration + Date -->
+        <div class="quote-card">
+          <span class="text" id="quoteText">
+            “Small consistent numbers today become stupid-big numbers by AEP.”
+          </span>
+          <span class="date-pill">
+            <span id="todayLabel">Today</span>
+          </span>
+        </div>
+
+        <!-- Date + Quick Entry -->
+        <div class="layout-main-inner">
+          <div>
+            <h2>✨ Daily Entry</h2>
+            <div class="field">
+              <label for="dateInput">
+                Date
+                <span class="tag">Required</span>
+              </label>
+              <input id="dateInput" type="date" />
+            </div>
+
+            <div class="quick-header-row">
+              <h2>⚡ Quick Entry</h2>
+              <small>Select a teammate and drop today's numbers.</small>
+            </div>
+
+            <div class="field">
+              <label for="memberSelect">
+                Team Member
+                <span class="tag">From your team</span>
+              </label>
+              <select id="memberSelect">
+                <option value="">— Select teammate —</option>
+              </select>
+            </div>
+
+            <div class="field-grid">
+              <div class="field">
+                <label for="presentationsInput">
+                  Presentations
+                  <span class="tag">#</span>
+                </label>
+                <input id="presentationsInput" type="number" min="0" step="1" value="0" />
+              </div>
+
+              <div class="field">
+                <label for="medicareAppsInput">
+                  Medicare Apps Submitted
+                  <span class="tag">#</span>
+                </label>
+                <input id="medicareAppsInput" type="number" min="0" step="1" value="0" />
+              </div>
+
+              <div class="field">
+                <label for="lifeAppsInput">
+                  Life Apps Submitted
+                  <span class="tag">#</span>
+                </label>
+                <input id="lifeAppsInput" type="number" min="0" step="1" value="0" />
+              </div>
+
+              <div class="field">
+                <label for="lifeApInput">
+                  Life AP ($)
+                  <span class="tag">$</span>
+                </label>
+                <input id="lifeApInput" type="number" min="0" step="1" value="0" />
+              </div>
+
+              <div class="field">
+                <label for="hiAppsInput">
+                  H.I. Apps Submitted
+                  <span class="tag">#</span>
+                </label>
+                <input id="hiAppsInput" type="number" min="0" step="1" value="0" />
+              </div>
+
+              <div class="field">
+                <label for="chasAppsInput">
+                  CHAS Plan Submissions
+                  <span class="tag">#</span>
+                </label>
+                <input id="chasAppsInput" type="number" min="0" step="1" value="0" />
+              </div>
+
+              <div class="field">
+                <label for="transfersInput">
+                  Transfers
+                  <span class="tag">#</span>
+                </label>
+                <input id="transfersInput" type="number" min="0" step="1" value="0" />
+              </div>
+            </div>
+
+            <div class="quick-actions">
+              <button id="saveBtn" class="btn-primary">
+                💾 Save Today
+              </button>
+              <div id="savedIndicator" class="saved-indicator">
+                ✅ Saved
+              </div>
+            </div>
+            <div class="mini">
+              Tip: You can save multiple teammates for the same date — just change the teammate and hit Save again.
+            </div>
+          </div>
+
+          <!-- Analytics -->
+          <div>
+            <h2>📊 Analytics</h2>
+            <div class="analytics-container">
+              <div class="analytics-header">
+                <span>Today’s Totals (All Teammates)</span>
+                <span class="sub" id="analyticsDateLabel">—</span>
+              </div>
+              <div class="bar-chart" id="barChart">
+                <!-- Bars created by JS -->
+              </div>
+              <div class="footer">
+                <span class="brand">© Waves of Protection Insurance — Team Tracker</span>
+                <span>Hover over bars mentally, not physically 😉 — labels show at the bottom.</span>
+              </div>
+            </div>
+
+            <div class="leaderboard-section" style="margin-top:10px;">
+              <h2>🏅 Today Breakdown</h2>
+              <div class="breakdown-grid" id="todayBreakdown">
+                <!-- Filled by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Team + Leaderboards + Tips -->
+    <div class="card">
+      <h2>👥 Team</h2>
+      <div class="team-add-row">
+        <input id="newMemberInput" type="text" placeholder="Add teammate (first name, nickname, etc.)" />
+        <button id="addMemberBtn">Add</button>
+      </div>
+      <div class="mini">
+        Names here populate the Team Member dropdown on the left.
+      </div>
+
+      <div class="team-list" id="teamList"></div>
+
+      <div class="leaderboard-section">
+        <h2>🏆 Leaderboard</h2>
+        <div class="leaderboard-tabs">
+          <button id="tabToday" class="active">Today</button>
+          <button id="tabAllTime">All-Time</button>
+        </div>
+        <div class="leaderboard-list" id="leaderboardList">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+
+      <div class="leaderboard-section">
+        <h2>ℹ️ Tips</h2>
+        <ul class="tips-list">
+          <li>Add your HEAP agents on the right, then choose them in Quick Entry.</li> 
+          <li>Enter daily numbers per teammate and hit <strong>Save Today</strong> each time.</li>
+          <li>Use <strong>Export JSON</strong> to back up your data or move it to another browser.</li>
+          <li>Use a normal (non-private) tab so localStorage can save your production.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = "wop_team_tracker_v3";
+
+      const quoteEl = document.getElementById("quoteText");
+      const todayLabelEl = document.getElementById("todayLabel");
+      const dateInput = document.getElementById("dateInput");
+      const memberSelect = document.getElementById("memberSelect");
+      const presentationsInput = document.getElementById("presentationsInput");
+      const medicareAppsInput = document.getElementById("medicareAppsInput");
+      const lifeAppsInput = document.getElementById("lifeAppsInput");
+      const lifeApInput = document.getElementById("lifeApInput");
+      const hiAppsInput = document.getElementById("hiAppsInput");
+      const chasAppsInput = document.getElementById("chasAppsInput");
+      const transfersInput = document.getElementById("transfersInput");
+      const saveBtn = document.getElementById("saveBtn");
+      const savedIndicator = document.getElementById("savedIndicator");
+      const storageWarning = document.getElementById("storageWarning");
+      const analyticsDateLabel = document.getElementById("analyticsDateLabel");
+      const barChartEl = document.getElementById("barChart");
+      const todayBreakdownEl = document.getElementById("todayBreakdown");
+      const newMemberInput = document.getElementById("newMemberInput");
+      const addMemberBtn = document.getElementById("addMemberBtn");
+      const teamListEl = document.getElementById("teamList");
+      const exportBtn = document.getElementById("exportBtn");
+      const importFile = document.getElementById("importFile");
+      const tabToday = document.getElementById("tabToday");
+      const tabAllTime = document.getElementById("tabAllTime");
+      const leaderboardListEl = document.getElementById("leaderboardList");
+
+      let storageAvailable = true;
+
+      function safeLoad() {
+        if (!window.localStorage) {
+          storageAvailable = false;
+          return null;
+        }
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return null;
+          return JSON.parse(raw);
+        } catch (e) {
+          console.error("Error reading storage", e);
+          storageAvailable = false;
+          return null;
+        }
+      }
+
+      function safeSave(state) {
+        if (!storageAvailable) return;
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (e) {
+          console.error("Error saving storage", e);
+          storageAvailable = false;
+        }
+      }
+
+      const defaultState = {
+        teamMembers: [],
+        entriesByDate: {} // {date: { member: {presentations, medicareApps, lifeApps, lifeAp, hiApps, chasApps, transfers} }}
+      };
+
+      let state = safeLoad() || defaultState;
+
+      if (!storageAvailable) {
+        storageWarning.classList.add("visible");
+      }
+
+      function initToday() {
+        const today = new Date();
+        const iso = today.toISOString().slice(0, 10);
+        dateInput.value = iso;
+        todayLabelEl.textContent = today.toLocaleDateString(undefined, {
+          weekday: "short",
+          month: "short",
+          day: "numeric"
+        });
+        analyticsDateLabel.textContent = today.toLocaleDateString(undefined, {
